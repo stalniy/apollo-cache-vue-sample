@@ -1,15 +1,15 @@
-import { ApolloClient } from 'apollo-client';
+import { ApolloClient, ObservableQuery } from 'apollo-client';
 import { InMemoryCache, ObjectCache } from 'apollo-cache-inmemory';
 import { ApolloLink, Observable } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
 import Vue from 'vue';
+
 
 class VueStore extends ObjectCache {
   constructor(store) {
     super()
     Vue.util.defineReactive(this, 'data', store || this.data)
   }
-
 
   set(dataId, value) {
     Vue.set(this.data, dataId, value);
@@ -87,23 +87,6 @@ class MyCache extends InMemoryCache {
 
 const cache = new MyCache();
 
-const link = new ApolloLink((operation) => {
-  return new Observable((observer) => {
-    setTimeout(() => {
-      observer.next({
-        data: {
-          repository: [{
-            __typename: 'Repository',
-            id: 1,
-            name: 'casl',
-            createdAt: new Date().toISOString()
-          }]
-        }
-      })
-    }, 1000)
-  })
-})
-
 const setContextLink = new ApolloLink((operation, forward) => {
   operation.setContext({
     ...graphQlClient.defaultContext
@@ -111,89 +94,98 @@ const setContextLink = new ApolloLink((operation, forward) => {
   return forward(operation)
 })
 
-export const graphQlClient = new ApolloClient({
+
+ObservableQuery.prototype.on = function on(event, listener) {
+  this.__watches = this.__watches || []
+  const queryDef = this.options.query.definitions[0]
+  const name = queryDef.selectionSet.selections[0].name.value
+
+  this.__watches.push(this[EVENTS_KEY].on(event, ({ cache, response }) => {
+    const key = { query: this.options.query, variables: this.variables }
+    const current = cache.readQuery(key)
+
+    key.data = listener(current[name], response.data) || current
+    cache.writeQuery(key)
+  }))
+  return this;
+};
+
+ObservableQuery.prototype.tearDownQuery = ((_super) => {
+  return function tearDownQuery(...args) {
+    this.__watches.forEach(fn => fn())
+    this.__watches.length = 0
+    return _super.apply(this, args)
+  }
+})(ObservableQuery.prototype.tearDownQuery);
+
+const noop = () => {}
+ObservableQuery.prototype.load = function load(variables) {
+  const result = this.setVariables(variables, true);
+
+  if (!this.observers.length) {
+    this.subscribe(noop)
+  }
+
+  return result
+}
+
+const EVENTS_KEY = Symbol('GraphqlClient')
+
+class Events {
+  constructor() {
+    this.topics = new Map()
+  }
+
+  emit(mutation, payload) {
+    const listeners = this.topics.get(mutation) || []
+    listeners.slice(0).forEach(fn => fn(payload))
+  }
+
+  on(mutation, callback) {
+    const listeners = this.topics.get(mutation) || []
+    let isAttached = true
+
+    listeners.push(callback)
+    this.topics.set(mutation, listeners)
+
+    return () => {
+      if (isAttached) {
+        isAttached = false
+        listeners.splice(listeners.indexOf(callback), 1)
+      }
+    }
+  }
+}
+
+class GraphQlClient extends ApolloClient {
+  constructor(...args) {
+    super(...args)
+    this._events = new Events()
+  }
+
+  mutate(options) {
+    return super.mutate({
+      update: (cache, response) => this._events.emit(options.mutation, {
+        mutation: options.mutation,
+        cache,
+        response
+      }),
+      ...options,
+    })
+  }
+
+  watchQuery(...args) {
+    const query = super.watchQuery(...args)
+
+    query[EVENTS_KEY] = this._events
+
+    return query
+  }
+}
+
+export const graphQlClient = new GraphQlClient({
   cache,
   link: setContextLink.concat(new HttpLink({
     uri: 'http://localhost:4444/api/gql'
   })),
 })
-
-function resolveVars(self, variables) {
-  if (typeof variables === 'string') {
-    return self[variables]()
-  }
-
-  if (typeof variables === 'function') {
-    return variables.call(self)
-  }
-
-  if (variables && typeof variables === 'object') {
-    return variables
-  }
-
-  return void 0
-}
-
-export function mapQuery(query, { variables, ...apolloOptions }) {
-  if (query.definitions.length !== 1) {
-    throw new Error('mapQuery expects query to contains only one operation')
-  }
-
-  const [queryDef] = query.definitions
-  const name = queryDef.selectionSet.selections[0].name.value
-  const varsCache = `__${queryDef.name.value}.vars__`
-
-  return {
-    computed: {
-      [varsCache]() {
-        return resolveVars(this, variables)
-      },
-      [name]() {
-        try {
-          return graphQlClient.readQuery({
-            query,
-            variables: this[varsCache]
-          })
-        } catch (e) {
-          return null
-        }
-      }
-    },
-    methods: {
-      [queryDef.name.value](params) {
-        return graphQlClient.query({
-          ...apolloOptions,
-          ...params,
-          variables: this[varsCache],
-          query,
-        })
-      }
-    }
-  }
-}
-
-export function mapApolloCache(query, { defaultValue, ...params } = {}) {
-  const [queryDef] = query.definitions
-  const name = queryDef.selectionSet.selections[0].name.value
-
-  return (_, getters) => {
-    return (variables, options) => {
-      try {
-        const value = getters.apollo.readQuery({
-          ...params,
-          ...options,
-          query,
-          variables: variables || params.variables
-        }, true)
-
-        return value ? value[name] : defaultValue
-      } catch (e) {
-        if (!e.message.includes(`Can't find field`)) {
-          throw e
-        }
-
-        return defaultValue
-      }
-    }
-  }
-}

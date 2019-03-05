@@ -1,18 +1,25 @@
 <template>
-  <div class="hello">
-    <button type="button" @click="loadPoints">fetch</button>
+  <div class="hello" v-if="points">
+    <button type="button" @click="load">fetch</button>
+    {{ point }}
 
     <el-table :data="points.items">
       <el-table-column prop="id" label="ID" />
       <el-table-column prop="title" label="Title" />
       <el-table-column prop="description" label="Description" />
+      <el-table-column>
+        <template slot-scope="{ row }">
+          <el-button @click="edit(row)">edit</el-button>
+          <el-button type="danger" @click="destroyItem(row)">delete</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <el-pagination
-      v-if="maxPage > 0"
+      v-if="maxPage > 1"
       layout="prev, pager, next"
-      :total="maxPage"
-      :current-page.sync="page"
+      :page-count="maxPage"
+      :current-page.sync="variables.page"
     />
 
     <el-form :model="newPoint">
@@ -29,14 +36,17 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
-import { mapAccessors } from '../store'
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'HelloWorld',
 
   data: () => ({
-    page: 1,
+    query: null,
+    variables: {
+      page: 1,
+      pageSize: 5,
+    },
     newPoint: {
       title: '',
       description: '',
@@ -48,24 +58,48 @@ export default {
   }),
 
   computed: {
+    ...mapGetters({
+      buildQuery: 'loadPointsQuery',
+      point: 'myPoint',
+    }),
+
     points() {
-      return this.$store.getters.points(this.variables)
+      return this.query.currentResult().data.points
     },
 
     maxPage() {
-      return Math.ceil(this.points.meta.total / 20)
+      return Math.ceil(this.points.meta.total / 5)
     }
+  },
+
+  watch: {
+    'variables.page': 'load'
   },
 
   methods: {
-    ...mapActions(['loadPoints', 'savePoint']),
+    ...mapActions(['savePoint', 'destroyPointById']),
 
     save() {
       this.savePoint({ id: -1, ...this.newPoint })
+    },
+
+    destroyItem(point) {
+      return this.destroyPointById(point.id)
+    },
+
+    edit(point) {
+      Object.assign(this.newPoint, point)
+    },
+
+    load() {
+      return this.query.load({ pagination: this.variables })
     }
   },
   async created() {
-    await this.loadPoints()
+    this.query = this.buildQuery()
+    await this.load()
+
+    this.$once('hook:beforeDestroy', () => this.query.tearDownQuery())
   }
 }
 </script>

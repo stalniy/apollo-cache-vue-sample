@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <button @click="isVisible = !isVisible" type="button">toggle</button>
+    <HelloWorld msg="Welcome to Your Vue.js App" v-if="isVisible"/>
   </div>
 </template>
 
@@ -11,7 +12,10 @@ export default {
   name: 'app',
   components: {
     HelloWorld
-  }
+  },
+  data: () => ({
+    isVisible: true
+  })
 }
 </script>
 
