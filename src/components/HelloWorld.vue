@@ -57,10 +57,6 @@ export default {
     newPoint: {
       title: '',
       description: '',
-      geo: {
-        type: 'Point',
-        coordinates: [50.400178, 30.326637]
-      }
     }
   }),
 

@@ -1,24 +1,22 @@
 import gql from 'graphql-tag';
 
 export const getAll = gql`
-  query getPoints($pagination: pagination!) {
-    points(filter: null, sort: "", pagination: $pagination) @connection(key: "points") {
+  query getPoints($pagination: Pagination!) {
+    points(pagination: $pagination) @connection(key: "points") {
       meta {
         total
       }
       items {
-        ... on Point {
-          title
-          id
-          description
-        }
+        title
+        id
+        description
       }
     }
   }
 `;
 
 export const create = gql`
-  mutation createPoint($point: point!) {
+  mutation createPoint($point: PointPayload!) {
     createPoint(point: $point) {
       details {
         id
@@ -30,7 +28,7 @@ export const create = gql`
 `
 
 export const update = gql`
-  mutation updatePoint($point: point!) {
+  mutation updatePoint($point: PointPayload!) {
     updatePoint(point: $point) {
       details {
         id
