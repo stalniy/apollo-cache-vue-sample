@@ -6,11 +6,12 @@ const CACHE_UPDATE_DISPOSALS = Symbol('CACHE_DISPOSALS')
 ObservableQuery.prototype.on = function on(event, computeNewValue) {
   const queryDef = this.options.query.definitions[0]
   const name = queryDef.selectionSet.selections[0].name.value
-  const dispose = this[Events.KEY].on(event, ({ cache, response }) => {
+  const dispose = this[Events.KEY].on(event, ({ cache, response, payload }) => {
     const key = { query: this.options.query, variables: this.variables }
     const current = cache.readQuery(key)
+    const options = { variables: this.variables, payload }
 
-    key.data = computeNewValue(current[name], response.data, this.variables) || current
+    key.data = computeNewValue(current[name], response.data, options) || current
     cache.writeQuery(key)
   })
 
@@ -39,6 +40,7 @@ export default class GraphqlClient extends ApolloClient {
     return super.mutate({
       update: (cache, response) => this[Events.KEY].emit(options.mutation, {
         mutation: options.mutation,
+        payload: options.variables,
         cache,
         response
       }),

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-button @click.native="test">test</el-button>
+    <el-button @click.native="stop">stop</el-button>
 
     <div class="hello" v-if="points">
       <button type="button" @click="load">fetch</button>
@@ -42,6 +42,13 @@
 import { mapActions, mapGetters, mapMutations, mapState } from 'vuex'
 import { graphQlClient } from '../plugins/apollo'
 import * as POINT_GQL from '../queries'
+
+// TODO:
+// mapQuery ?
+// mapMutation ?
+// mapQueryResult ?
+// update cache on subscription event ?
+// query.fetchMore({ updateQuery() {} }) ?
 
 export default {
   name: 'HelloWorld',
@@ -136,9 +143,5 @@ export default {
       this.load(this.variables)
     }
   },
-
-  beforeCreate() {
-    this
-  }
 }
 </script>
