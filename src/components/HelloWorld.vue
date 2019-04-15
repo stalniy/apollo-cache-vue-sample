@@ -39,13 +39,13 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapMutations, mapState } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import { graphQlClient } from '../plugins/apollo'
+import { mapMutations } from '../plugins/helpers'
 import * as POINT_GQL from '../queries'
 
 // TODO:
 // mapQuery ?
-// mapMutation ?
 // mapQueryResult ?
 // update cache on subscription event ?
 // query.fetchMore({ updateQuery() {} }) ?
@@ -95,15 +95,30 @@ export default {
   },
 
   methods: {
-    ...mapActions(['savePoint', 'destroyPointById']),
-    ...mapMutations(['check']),
+    ...mapMutations([
+      POINT_GQL.create,
+      POINT_GQL.update,
+      POINT_GQL.remove
+    ]),
 
     save() {
-      this.savePoint({ id: -1, ...this.newPoint })
+      const variables = { point: this.newPoint }
+      const optimisticResponse = {
+        __typename: 'Point',
+        id: -1,
+        ...this.newPoint
+      }
+      const options = { optimisticResponse }
+
+      if (this.newPoint.id) {
+        this.updatePoint(variables, options)
+      } else {
+        this.createPoint(variables, options)
+      }
     },
 
     destroyItem(point) {
-      return this.destroyPointById(point.id)
+      return this.deletePoint({ id: point.id })
     },
 
     edit(point) {

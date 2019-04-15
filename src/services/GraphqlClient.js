@@ -33,7 +33,8 @@ export default class GraphqlClient extends ApolloClient {
   constructor(options, ...args) {
     super(options, ...args)
     this[Events.KEY] = new Events()
-    this.syncQueryCache = options.syncQueryCache || {}
+    this.configureCache = options.configureCache || {}
+    this.onClearStore(this.cache.reset.bind(this.cache))
   }
 
   mutate(options) {
@@ -51,7 +52,7 @@ export default class GraphqlClient extends ApolloClient {
   watchQuery(options, ...args) {
     const query = super.watchQuery(options, ...args)
     const queryDef = options.query.definitions[0]
-    const configureCacheUpdates = this.syncQueryCache[queryDef.name.value]
+    const configureCacheUpdates = this.configureCache[queryDef.name.value]
 
     if (configureCacheUpdates) {
       query[Events.KEY] = this[Events.KEY]

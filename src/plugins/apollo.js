@@ -25,7 +25,7 @@ export const graphQlClient = new GraphQlClient({
       }
     }
   }),
-  syncQueryCache: {
+  configureCache: {
     getPoints(query) {
       query.on(POINT_GQL.create, (current, response, { variables }) => {
         if (current.items.length < variables.pagination.pageSize) {

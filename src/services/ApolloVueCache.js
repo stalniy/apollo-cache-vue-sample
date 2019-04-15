@@ -39,11 +39,21 @@ export default class ApolloVueCache extends InMemoryCache {
   constructor({ data, ...config }) {
     super({ ...config, resultCaching: false })
     this.data = new VueStore()
+    this._initialState = data
     Vue.util.defineReactive(this, 'optimisticData', this.data)
 
     if (data) {
       this.writeData({ data })
     }
+  }
+
+  reset() {
+    return super.reset()
+      .then(() => {
+        if (this._initialState) {
+          this.writeData({ data: this._initialState })
+        }
+      })
   }
 
   // TODO: remove the next 2 methods and OptimisticCacheLayer
