@@ -1,9 +1,9 @@
 <template>
   <div>
     <el-button @click.native="stop">stop</el-button>
+    <button type="button" @click="load">fetch</button>
 
     <div class="hello" v-if="points">
-      <button type="button" @click="load">fetch</button>
       <el-table :data="points.items">
         <el-table-column prop="id" label="ID" />
         <el-table-column prop="title" label="Title" />
@@ -16,12 +16,17 @@
         </el-table-column>
       </el-table>
 
+
       <el-pagination
         v-if="maxPage > 1"
         layout="prev, pager, next"
         :page-count="maxPage"
         :current-page.sync="variables.pagination.page"
       />
+
+      <el-button @click="fetchMore">Load more</el-button>
+
+      <hr />
 
       <el-form :model="newPoint">
         <el-form-item prop="title" label="Title">
@@ -77,17 +82,12 @@ export default {
     },
   },
 
-  watch: {
-    'variables.pagination.page': {
-      immediate: true,
-      handler() {
-        this.load(this.variables)
-      }
-    }
-  },
-
   beforeCreate() {
     this.query = this.$createQuery(POINT_GQL.getAll)
+  },
+
+  created() {
+    this.load()
   },
 
   methods: {
@@ -121,8 +121,13 @@ export default {
       Object.assign(this.newPoint, point)
     },
 
-    load(variables) {
-      this.query.load(variables)
+    load(vars) {
+      return this.query.fetch(vars || this.variables)
+    },
+
+    fetchMore() {
+      this.variables.pagination.page++
+      return this.query.fetchMore(this.variables)
     },
 
     stop() {

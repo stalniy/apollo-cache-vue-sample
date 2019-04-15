@@ -24,7 +24,7 @@ export default class GqlQuery {
       : undefined
   }
 
-  load(variables, options = null) {
+  fetch(variables, options = null) {
     this.abort()
     this.observedQuery = this.client.watchQuery({
       ...this.options,
@@ -45,6 +45,13 @@ export default class GqlQuery {
         this.unsubscribe = null
         this.observedQuery = null
       }
+    })
+  }
+
+  fetchMore(variables, options = null) {
+    return this.observedQuery.fetchMore({
+      ...options,
+      variables
     })
   }
 

@@ -1,11 +1,18 @@
 import { ApolloClient, ObservableQuery } from 'apollo-client'
 import Events from './Events'
+import { getOperationName } from './gqlAst'
+
+export const FETCH_MORE = Symbol('fetchMore')
 
 // TODO: remove this when https://github.com/apollographql/apollo-feature-requests/issues/97 this is done
 const CACHE_UPDATE_DISPOSALS = Symbol('CACHE_DISPOSALS')
 ObservableQuery.prototype.on = function on(event, computeNewValue) {
-  const queryDef = this.options.query.definitions[0]
-  const name = queryDef.selectionSet.selections[0].name.value
+  if (event === FETCH_MORE) {
+    this[FETCH_MORE] = computeNewValue
+    return this
+  }
+
+  const { operationName: name } = getOperationName(this.options.query)
   const dispose = this[Events.KEY].on(event, ({ cache, response, payload }) => {
     const key = { query: this.options.query, variables: this.variables }
     const current = cache.readQuery(key)
@@ -28,6 +35,27 @@ ObservableQuery.prototype.tearDownQuery = ((original) => {
     return original.apply(this, args)
   }
 })(ObservableQuery.prototype.tearDownQuery);
+
+ObservableQuery.prototype.fetchMore = ((original) => {
+  return function fetchMore(options) {
+    let updateQuery
+
+    if (this[FETCH_MORE]) {
+      const { operationName: name } = getOperationName(this.options.query)
+      updateQuery = (current, response) => {
+        if (!response.fetchMoreResult) {
+          return current
+        }
+
+        return {
+          [name]: this[FETCH_MORE](current[name], response.fetchMoreResult[name])
+        }
+      }
+    }
+
+    return original.call(this, { updateQuery, ...options })
+  }
+})(ObservableQuery.prototype.fetchMore);
 
 export default class GraphqlClient extends ApolloClient {
   constructor(options, ...args) {

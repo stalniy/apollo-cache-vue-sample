@@ -1,6 +1,6 @@
 import { ApolloLink } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
-import GraphQlClient from '../services/GraphqlClient'
+import GraphQlClient, { FETCH_MORE } from '../services/GraphqlClient'
 import ApolloVueCache from '../services/ApolloVueCache'
 import * as POINT_GQL from '../queries'
 
@@ -39,6 +39,13 @@ export const graphQlClient = new GraphQlClient({
         const id = response.deletePoint.details.id
         current.items = current.items.filter(item => item.id !== id)
         current.meta.total--
+      })
+
+      query.on(FETCH_MORE, (current, response) => {
+        return {
+          meta: response.meta,
+          items: current.items.concat(response.items)
+        }
       })
     }
   },
