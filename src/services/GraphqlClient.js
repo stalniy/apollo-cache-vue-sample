@@ -30,8 +30,15 @@ ObservableQuery.prototype.on = function on(event, computeNewValue) {
 
 ObservableQuery.prototype.tearDownQuery = ((original) => {
   return function tearDownQuery(...args) {
-    this[CACHE_UPDATE_DISPOSALS].forEach(dispose => dispose())
-    this[CACHE_UPDATE_DISPOSALS] = null
+    if (this[CACHE_UPDATE_DISPOSALS]) {
+      this[CACHE_UPDATE_DISPOSALS].forEach(dispose => dispose())
+      this[CACHE_UPDATE_DISPOSALS] = null
+    }
+
+    if (this[FETCH_MORE]) {
+      this[FETCH_MORE] = null
+    }
+
     return original.apply(this, args)
   }
 })(ObservableQuery.prototype.tearDownQuery);
@@ -47,8 +54,11 @@ ObservableQuery.prototype.fetchMore = ((original) => {
           return current
         }
 
+        const data = response.fetchMoreResult[name]
+
         return {
-          [name]: this[FETCH_MORE](current[name], response.fetchMoreResult[name])
+          __typename: data.__typename,
+          [name]: this[FETCH_MORE](current[name], data[name])
         }
       }
     }

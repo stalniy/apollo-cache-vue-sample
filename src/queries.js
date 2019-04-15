@@ -48,3 +48,22 @@ export const remove = gql`
     }
   }
 `
+
+export const visibility = gql`
+  query getVisibility {
+    ui @client {
+      isVisible
+      items
+    }
+  }
+`
+
+export const getPoint = gql`
+  query getPoint {
+    point {
+      id
+      title
+      description
+    }
+  }
+`

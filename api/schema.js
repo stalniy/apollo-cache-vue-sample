@@ -26,6 +26,7 @@ type User {
 
 type Query {
   user: User!
+  point: Point!
   points(pagination: Pagination!): PaginatedPoints!
 }
 

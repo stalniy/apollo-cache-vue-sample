@@ -24,6 +24,10 @@ const resolvers = {
           total: points.length
         }
       }
+    },
+
+    async point() {
+      return Object.assign(points[1], { description: Math.random() })
     }
   },
   Mutation: {

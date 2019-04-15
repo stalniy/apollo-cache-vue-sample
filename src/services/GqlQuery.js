@@ -28,6 +28,10 @@ export default class GqlQuery {
     })
     this.isLoading = true
 
+    if (options && options.fetchPolicy && options.fetchPolicy.startsWith('cache')) {
+      this.response = this.client.readQuery({ query: this.query, variables })
+    }
+
     return new Promise((resolve, reject) => {
       const subscription = this.observedQuery.subscribe(
         (response) => {

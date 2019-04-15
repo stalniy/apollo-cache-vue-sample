@@ -21,7 +21,8 @@ export const graphQlClient = new GraphQlClient({
     data: {
       ui: {
         __typename: 'UI',
-        token: 'test'
+        isVisible: false,
+        items: []
       }
     }
   }),
