@@ -39,14 +39,10 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
-import { graphQlClient } from '../plugins/apollo'
 import { mapMutations } from '../plugins/helpers'
 import * as POINT_GQL from '../queries'
 
 // TODO:
-// mapQuery ?
-// mapQueryResult ?
 // update cache on subscription event ?
 // query.fetchMore({ updateQuery() {} }) ?
 
@@ -73,11 +69,7 @@ export default {
     },
 
     points() {
-      return this.query.currentResult().data.points
-    },
-
-    isLoading2() {
-      return this.query.currentResult().loading
+      return this.query.results
     },
 
     maxPage() {
@@ -92,6 +84,10 @@ export default {
         this.load(this.variables)
       }
     }
+  },
+
+  beforeCreate() {
+    this.query = this.$createQuery(POINT_GQL.getAll)
   },
 
   methods: {
@@ -126,31 +122,11 @@ export default {
     },
 
     load(variables) {
-      if (this._unsubscribe) {
-        this._unsubscribe()
-        this.$off('hook:beforeDestroy', this._unsubscribe)
-        this._unsubscribe = null
-      }
-
-      this.query = graphQlClient.watchQuery({
-        query: POINT_GQL.getAll,
-        variables
-      })
-      this.isLoading = true
-      const subscription = this.query.subscribe(() => {
-        this.isLoading = false
-      })
-
-      this._unsubscribe = () => subscription.unsubscribe()
-      this.$once('hook:beforeDestroy', this._unsubscribe)
+      this.query.load(variables)
     },
 
     stop() {
-      if (this._unsubscribe) {
-        this._unsubscribe()
-        this.$off('hook:beforeDestroy', this._unsubscribe)
-        this._unsubscribe = null
-      }
+      this.query.abort()
     },
 
     test() {

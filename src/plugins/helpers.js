@@ -1,13 +1,15 @@
+import GqlQuery from '../services/GqlQuery'
+import { getOperationName } from '../services/gqlAst'
+
 function rejectTypename(key, value) {
   return key === '__typename' ? undefined : value
 }
 
 export function mapMutations(mutations) {
-  return mutations.reduce((object, mutation) => {
-    const def = mutation.definitions[0]
-    const mutationName = def.selectionSet.selections[0].name.value
+  return mutations.reduce((methods, mutation) => {
+    const { name, operationName } = getOperationName(mutation)
 
-    object[def.name.value] = function(variables, options = null) {
+    methods[name] = function(variables, options = null) {
       const params = {
         ...options,
         mutation,
@@ -20,18 +22,22 @@ export function mapMutations(mutations) {
       if (params.optimisticResponse) {
         params.optimisticResponse = {
           __typename: 'Mutation',
-          [mutationName]: {
+          [operationName]: {
             __typename: `${params.optimisticResponse.__typename}Event`,
             details: params.optimisticResponse
           }
         }
       }
 
-      console.log(params)
-
       return this.$root.$options.graphql.mutate(params)
     }
 
-    return object
+    return methods
   }, {})
+}
+
+export function createQuery(querySDL) {
+  const query = new GqlQuery(this.$root.$options.graphql, querySDL)
+  this.$on('hook:beforeDestroy', query.abort.bind(query))
+  return query
 }

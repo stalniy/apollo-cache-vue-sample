@@ -11,7 +11,7 @@ const resolvers = {
     async points(_, { pagination }) {
       const startIndex = (pagination.page - 1) * pagination.pageSize
       return {
-        items: points.slice(startIndex, pagination.pageSize),
+        items: points.slice(startIndex, startIndex + pagination.pageSize),
         meta: {
           total: points.length
         }
