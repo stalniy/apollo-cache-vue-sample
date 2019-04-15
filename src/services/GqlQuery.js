@@ -8,19 +8,13 @@ export default class GqlQuery {
     this.options = options
     this.queryName = getOperationName(query).operationName
     Vue.util.defineReactive(this, 'isLoading', false)
-    Vue.util.defineReactive(this, 'observedQuery', null)
+    Vue.util.defineReactive(this, 'response', null)
     this.unsubscribe = null
   }
 
   get results() {
-    return this.response
+    return this.response && this.response.data
       ? this.response.data[this.queryName]
-      : undefined
-  }
-
-  get response() {
-    return this.observedQuery
-      ? this.observedQuery.currentResult()
       : undefined
   }
 
@@ -36,14 +30,22 @@ export default class GqlQuery {
 
     return new Promise((resolve, reject) => {
       const subscription = this.observedQuery.subscribe(
-        resolve,
-        reject,
-        () => this.isLoading = false
+        (response) => {
+          this.response = response
+          this.isLoading = false
+          resolve(response)
+        },
+        (error) => {
+          this.isLoading = false
+          reject(error)
+        }
       )
       this.unsubscribe = () => {
         subscription.unsubscribe()
         this.unsubscribe = null
         this.observedQuery = null
+        this.isLoading = false
+        this.response = null
       }
     })
   }

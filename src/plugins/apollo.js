@@ -1,7 +1,7 @@
 import { ApolloLink } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
 import GraphQlClient, { FETCH_MORE } from '../services/GraphqlClient'
-import ApolloVueCache from '../services/ApolloVueCache'
+import ApolloCache from '../services/ApolloCache'
 import * as POINT_GQL from '../queries'
 
 const setContextLink = new ApolloLink((operation, forward) => {
@@ -17,7 +17,7 @@ export const graphQlClient = new GraphQlClient({
       fetchPolicy: 'cache-and-network',
     }
   },
-  cache: new ApolloVueCache({
+  cache: new ApolloCache({
     data: {
       ui: {
         __typename: 'UI',

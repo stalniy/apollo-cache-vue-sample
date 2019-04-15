@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <Navbar />
     <button @click="isVisible = !isVisible" type="button">toggle</button>
     <HelloWorld msg="Welcome to Your Vue.js App" v-if="isVisible"/>
   </div>
@@ -7,11 +8,13 @@
 
 <script>
 import HelloWorld from './components/HelloWorld.vue'
+import Navbar from './components/Navbar.vue'
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    HelloWorld,
+    Navbar
   },
   data: () => ({
     isVisible: true

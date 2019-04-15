@@ -8,8 +8,16 @@ function delay(ms) {
 const points = Array.from({ length: 3 }).map((_, i) => ({ id: String(i + 1), title: `Point #${i + 1}`, description: 'test' }))
 const resolvers = {
   Query: {
+    async user() {
+      return {
+        firstName: 'John',
+        lastName: 'Doe'
+      }
+    },
+
     async points(_, { pagination }) {
       const startIndex = (pagination.page - 1) * pagination.pageSize
+
       return {
         items: points.slice(startIndex, startIndex + pagination.pageSize),
         meta: {
@@ -22,8 +30,8 @@ const resolvers = {
     async createPoint(_, { point }) {
       const lastId = points.length > 0 ? Number(points[points.length - 1].id) : 0
 
-      await delay(1000)
       point.id = String(lastId + 1)
+      await delay(1000)
       points.push(point)
 
       return {

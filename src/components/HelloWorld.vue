@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-button @click.native="stop">stop</el-button>
-    <button type="button" @click="load">fetch</button>
+    <el-button @click="abort">abort request</el-button>
+    <el-button @click="load()">fetch</el-button>
 
     <div class="hello" v-if="points">
       <el-table :data="points.items">
@@ -49,7 +49,6 @@ import * as POINT_GQL from '../queries'
 
 // TODO:
 // update cache on subscription event ?
-// query.fetchMore({ updateQuery() {} }) ?
 
 export default {
   name: 'HelloWorld',
@@ -69,10 +68,6 @@ export default {
   }),
 
   computed: {
-    token() {
-      return this.$store.state.token
-    },
-
     points() {
       return this.query.results
     },
@@ -130,13 +125,8 @@ export default {
       return this.query.fetchMore(this.variables)
     },
 
-    stop() {
+    abort() {
       this.query.abort()
-    },
-
-    test() {
-      this.variables.pagination.page = 2
-      this.load(this.variables)
     }
   },
 }

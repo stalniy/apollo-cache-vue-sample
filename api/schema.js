@@ -19,7 +19,13 @@ input Pagination {
   pageSize: Int!
 }
 
+type User {
+  firstName: String!
+  lastName: String!
+}
+
 type Query {
+  user: User!
   points(pagination: Pagination!): PaginatedPoints!
 }
 
