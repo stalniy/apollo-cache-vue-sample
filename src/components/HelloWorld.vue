@@ -6,8 +6,8 @@
     <el-button @click="indirectCacheUpdate">fetch point</el-button>
 
     <h2>test client cache mapping</h2>
-    {{ ui.items }}
-    <el-collapse v-model="ui.items">
+    {{ visibility }}
+    <el-collapse v-model="visibility">
       <el-collapse-item title="Consistency" name="1">
         <div>Consistent with real life: in line with the process and logic of real life, and comply with languages and habits that the users are used to;</div>
         <div>Consistent within interface: all elements should be consistent, such as: design style, icons and texts, position of elements, etc.</div>
@@ -101,18 +101,26 @@ export default {
       return Math.ceil(this.points.meta.total / this.variables.pagination.pageSize)
     },
 
-    ...mapClientQueries([
-      POINT_GQL.visibility,
-    ]),
+    visibility: {
+      get() {
+        const results = this.visibilityQuery.results
+        return results ? results.items : results
+      },
+      set(items) {
+        this.visibilityQuery.updateCache({ items })
+      }
+    }
   },
 
   beforeCreate() {
     this.query = this.$createQuery(POINT_GQL.getAll)
     this.pointQuery = this.$createQuery(POINT_GQL.getPoint)
+    this.visibilityQuery = this.$createQuery(POINT_GQL.visibility)
   },
 
   created() {
     this.load()
+    this.visibilityQuery.fetch(null, { fetchPolicy: 'cache-only' })
   },
 
   methods: {
@@ -165,7 +173,7 @@ export default {
 
     indirectCacheUpdate() {
       return this.pointQuery.fetch()
-    }
+    },
   },
 }
 </script>

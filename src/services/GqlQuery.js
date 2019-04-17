@@ -66,4 +66,20 @@ export default class GqlQuery {
       this.unsubscribe()
     }
   }
+
+  updateCache(rawValue) {
+    let value = rawValue
+
+    if (typeof this.results === 'object') {
+      value = { ...this.results, ...rawValue }
+    }
+
+    this.client.writeQuery({
+      query: this.query,
+      variables: this.observedQuery ? this.observedQuery.variables : undefined,
+      data: {
+        [this.queryName]: value
+      }
+    })
+  }
 }

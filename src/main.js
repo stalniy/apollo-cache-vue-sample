@@ -11,8 +11,10 @@ Vue.config.productionTip = false
 Vue.use(ElementUi, { locale })
 Vue.prototype.$createQuery = createQuery
 
-new Vue({
-  store,
-  graphql: graphQlClient,
-  render: h => h(App)
-}).$mount('#app')
+graphQlClient.cache.restoreFromStorage()
+  .then(() => new Vue({
+    el: '#app',
+    store,
+    graphql: graphQlClient,
+    render: h => h(App)
+  }))

@@ -24,6 +24,11 @@ export const graphQlClient = new GraphQlClient({
         isVisible: false,
         items: []
       }
+    },
+    persistance: {
+      storage: window.localStorage,
+      debounce: 500,
+      keys: ['ui']
     }
   }),
   configureCache: {
