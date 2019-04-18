@@ -59,8 +59,8 @@ export const visibility = gql`
 `
 
 export const getPoint = gql`
-  query getPoint {
-    point {
+  query getPoint($id: ID!) {
+    getFragment(id: $id, __typename: Point) @client {
       id
       title
       description

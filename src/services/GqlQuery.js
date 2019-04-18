@@ -35,6 +35,7 @@ export default class GqlQuery {
     return new Promise((resolve, reject) => {
       const subscription = this.observedQuery.subscribe(
         (response) => {
+          console.log(response)
           this.response = response
           this.isLoading = false
           resolve(response)

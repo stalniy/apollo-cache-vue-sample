@@ -53,6 +53,9 @@
 
       <hr />
 
+      <h2>Watch cache</h2>
+      {{ pointQuery.results }}
+
       <el-form :model="newPoint">
         <el-form-item prop="title" label="Title">
           <el-input v-model="newPoint.title" />
@@ -115,12 +118,12 @@ export default {
   beforeCreate() {
     this.query = this.$createQuery(POINT_GQL.getAll)
     this.pointQuery = this.$createQuery(POINT_GQL.getPoint)
-    this.visibilityQuery = this.$createQuery(POINT_GQL.visibility)
+    this.visibilityQuery = this.$createQuery(POINT_GQL.visibility, { fetchPolicy: 'cache-only' })
   },
 
   created() {
-    this.load()
-    this.visibilityQuery.fetch(null, { fetchPolicy: 'cache-only' })
+    // this.load()
+    this.visibilityQuery.fetch()
   },
 
   methods: {
@@ -172,7 +175,7 @@ export default {
     },
 
     indirectCacheUpdate() {
-      return this.pointQuery.fetch()
+      return this.pointQuery.fetch({ id: 1 })
     },
   },
 }

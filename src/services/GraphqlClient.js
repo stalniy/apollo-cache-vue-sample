@@ -68,8 +68,23 @@ ObservableQuery.prototype.fetchMore = ((original) => {
 })(ObservableQuery.prototype.fetchMore);
 
 export default class GraphqlClient extends ApolloClient {
-  constructor(options, ...args) {
-    super(options, ...args)
+  constructor(options) {
+    const resolvers = { ...options.resolvers }
+    super({
+      ...options,
+      resolvers: {
+        ...resolvers,
+        Query: {
+          ...resolvers.Query,
+          getFragment: (_, variables, { cache }) => {
+            console.log('here?')
+            const fragmentId = cache.config.dataIdFromObject(variables);
+            console.log(fragmentId)
+            return cache.data.data[fragmentId];
+          },
+        }
+      }
+    })
     this[Events.KEY] = new Events()
     this.configureCache = options.configureCache || {}
     this.onClearStore(this.cache.reset.bind(this.cache))

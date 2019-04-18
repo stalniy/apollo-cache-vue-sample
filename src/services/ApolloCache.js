@@ -3,7 +3,19 @@ import CachePersistor from './CachePersistor'
 
 export default class ApolloCache extends InMemoryCache {
   constructor({ data, persistance, ...config }) {
-    super({ ...config, resultCaching: false })
+    const cacheRedirects = { ...config.cacheRedirects }
+
+    super({
+      ...config,
+      resultCaching: false,
+      cacheRedirects: {
+        ...cacheRedirects,
+        Query: {
+          ...cacheRedirects.Query,
+          getFragment: (_, variables, ctx) => ctx.getCacheKey(variables)
+        }
+      }
+    })
     this._initialState = data
     this._persistor = null
 

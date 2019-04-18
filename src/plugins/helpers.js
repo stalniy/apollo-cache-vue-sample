@@ -37,8 +37,8 @@ export function mapMutations(mutations) {
   }, {})
 }
 
-export function createQuery(querySDL) {
-  const query = new GqlQuery(this.$root.$options.graphql, querySDL)
+export function createQuery(querySDL, options = null) {
+  const query = new GqlQuery(this.$root.$options.graphql, querySDL, options)
   this.$on('hook:beforeDestroy', query.abort.bind(query))
   return query
 }
