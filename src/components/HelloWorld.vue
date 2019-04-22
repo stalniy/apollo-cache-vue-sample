@@ -53,9 +53,6 @@
 
       <hr />
 
-      <h2>Watch cache</h2>
-      {{ pointQuery.results }}
-
       <el-form :model="newPoint">
         <el-form-item prop="title" label="Title">
           <el-input v-model="newPoint.title" />
@@ -72,7 +69,6 @@
 </template>
 
 <script>
-import { mapMutations, mapClientQueries } from '../plugins/helpers'
 import * as POINT_GQL from '../queries'
 
 // TODO:
@@ -122,17 +118,11 @@ export default {
   },
 
   created() {
-    // this.load()
+    this.load()
     this.visibilityQuery.fetch()
   },
 
   methods: {
-    ...mapMutations([
-      POINT_GQL.create,
-      POINT_GQL.update,
-      POINT_GQL.remove,
-    ]),
-
     save() {
       const variables = { point: this.newPoint }
       const optimisticResponse = {
@@ -140,17 +130,9 @@ export default {
         id: -1,
         ...this.newPoint
       }
-      const options = { optimisticResponse }
+      const mutation = this.newPoint.id ? POINT_GQL.update : POINT_GQL.create
 
-      if (this.newPoint.id) {
-        this.updatePoint(variables, options)
-      } else {
-        this.createPoint(variables, options)
-      }
-    },
-
-    destroyItem(point) {
-      return this.deletePoint({ id: point.id })
+      return this.$apollo.mutate({ mutation, variables, optimisticResponse })
     },
 
     edit(point) {
@@ -175,7 +157,7 @@ export default {
     },
 
     indirectCacheUpdate() {
-      return this.pointQuery.fetch({ id: 1 })
+      return this.pointQuery.fetch()
     },
   },
 }

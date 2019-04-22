@@ -10,11 +10,11 @@ import locale from 'element-ui/lib/locale/lang/en'
 Vue.config.productionTip = false
 Vue.use(ElementUi, { locale })
 Vue.prototype.$createQuery = createQuery
+Vue.prototype.$apollo = graphQlClient
 
 graphQlClient.cache.restoreFromStorage()
   .then(() => new Vue({
     el: '#app',
     store,
-    graphql: graphQlClient,
     render: h => h(App)
   }))

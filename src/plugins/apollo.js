@@ -2,6 +2,7 @@ import { ApolloLink } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
 import GraphQlClient, { FETCH_MORE } from '../services/GraphqlClient'
 import ApolloCache from '../services/ApolloCache'
+import { getOperationName } from '../services/gqlAst'
 import * as POINT_GQL from '../queries'
 
 const setContextLink = new ApolloLink((operation, forward) => {
@@ -53,6 +54,17 @@ export const graphQlClient = new GraphQlClient({
           items: current.items.concat(response.items)
         }
       })
+    }
+  },
+  optimisticResponse(mutation, response) {
+    const { operationName } = getOperationName(mutation)
+
+    return {
+      __typename: 'Mutation',
+      [operationName]: {
+        __typename: `${response.__typename}Event`,
+        details: response
+      }
     }
   },
   link: setContextLink

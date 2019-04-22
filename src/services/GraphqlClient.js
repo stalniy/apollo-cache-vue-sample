@@ -55,17 +55,21 @@ ObservableQuery.prototype.fetchMore = ((original) => {
         }
 
         const data = response.fetchMoreResult[name]
+        const state = this[FETCH_MORE](current[name], data)
 
-        return {
-          __typename: data.__typename,
-          [name]: this[FETCH_MORE](current[name], data[name])
-        }
+        state.__typename = data.__typename
+
+        return { [name]: state }
       }
     }
 
     return original.call(this, { updateQuery, ...options })
   }
 })(ObservableQuery.prototype.fetchMore);
+
+function rejectTypename(key, value) {
+  return key === '__typename' ? undefined : value
+}
 
 export default class GraphqlClient extends ApolloClient {
   constructor(options) {
@@ -85,12 +89,21 @@ export default class GraphqlClient extends ApolloClient {
         }
       }
     })
+    this.optimisticResponse = options.optimisticResponse
     this[Events.KEY] = new Events()
     this.configureCache = options.configureCache || {}
     this.onClearStore(this.cache.reset.bind(this.cache))
   }
 
   mutate(options) {
+    if (options.optimisticResponse && this.optimisticResponse) {
+      options.optimisticResponse = this.optimisticResponse(options.mutation, options.optimisticResponse)
+    }
+
+    if (options.variables) {
+      options.variables = JSON.parse(JSON.stringify(options.variables), rejectTypename)
+    }
+
     return super.mutate({
       update: (cache, response) => this[Events.KEY].emit(options.mutation, {
         mutation: options.mutation,
